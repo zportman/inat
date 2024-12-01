@@ -14,7 +14,7 @@ import json
 #all bee observations is 185321
 #ground nesting 164778
 
-project =98755
+project =164778
 
 #response = get_observation_taxonomy(project_id= project, verifiable=True) # oh wow this works....gets counts of all taxa, whether leaf or node
 response = get_observation_taxonomy(project_id= project, verifiable=any) # oh wow this works....gets counts of all taxa, whether leaf or node
@@ -135,8 +135,8 @@ for taxa in all_taxa:
         
     
     #now closing off each taxa
-    #final_string = final_string + "<br>" + "\n"  #can't use the br if pasting into iNat journal cuz it creates extraneous newlines
-    final_string = final_string + "\n"
+    final_string = final_string + "<br>" + "\n"  #can't use the br if pasting into iNat journal cuz it creates extraneous newlines
+    #final_string = final_string + "\n" #this one for source to use in iNat journal post
 
 #Idea -- can change from strict vs inclusive observations to XX observations not identified to species?
 

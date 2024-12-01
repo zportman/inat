@@ -16,7 +16,7 @@ import json
 # can also get ID by fully searching for them in the general search and clicking on their name
 
 project = 185321
-user_ID = 'zportman'
+user_ID = 'xianzx'
 
 #old query for the project
 ####response = get_observation_taxonomy(project_id= project, verifiable=True) # oh wow this works....gets counts of all taxa, whether leaf or node
