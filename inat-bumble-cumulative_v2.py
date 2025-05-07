@@ -58,6 +58,9 @@ def affinis_state_breakdown(species):
     Twent_twentythree = get_day_histogram(species, dt.datetime(2023, 3, 1), dt.datetime(2023, 10, 31), "38")
     Twent_twentyfour = get_day_histogram(species, dt.datetime(2024, 3, 1), dt.datetime(2024, 10, 31), "38")   
     
+
+    
+    
     v = np.cumsum(Twent_twentytwenty) 
     w = np.cumsum(Twent_twentyone) 
     x = np.cumsum(Twent_twentytwo) 
@@ -142,6 +145,9 @@ def affinis_state_breakdown(species):
     Twent_twentythree = get_day_histogram(species, dt.datetime(2023, 3, 1), dt.datetime(2023, 10, 31), "35")
     Twent_twentyfour = get_day_histogram(species, dt.datetime(2024, 3, 1), dt.datetime(2024, 10, 31), "35")   
     
+    #trying out excluded observors
+    Twent_twentyfour = get_day_histogram_minus_observers(species, dt.datetime(2024, 3, 1), dt.datetime(2024, 10, 31), "35", excluded_observers = ['barty', 'wmct276'])   #    
+    #
     v = np.cumsum(Twent_twentytwenty) 
     w = np.cumsum(Twent_twentyone) 
     x = np.cumsum(Twent_twentytwo) 
@@ -186,7 +192,7 @@ def get_day_histogram_eastern(species, time1, time2):
     
     return days
     
-def get_day_histogram(species, time1, time2, place="97394"):
+def get_day_histogram(species, time1, time2, place="97394"): #place = north america
     #Time should be in datetime format, but I don't think it need to be, check pyinat docs
     #Default place ID is set to North America.
     
@@ -211,6 +217,51 @@ def get_day_histogram(species, time1, time2, place="97394"):
 
 
 
+def get_day_histogram_minus_observers(species, time1, time2, place="97394", excluded_observers = ''): #place = north america
+    """new variant that will remove certain observers that are specified"""
+    #Time should be in datetime format, but I don't think it need to be, check pyinat docs
+    #Default place ID is set to North America.
+    
+    #get a histogram of days observed
+    #histogram = get_observation_histogram(taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research')
+    #histogram = get_observation_histogram(taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',
+    #                                      nelat='64.18813159901904', nelng='-50', swlat ='22', swlng='-100' )
+    histogram = get_observation_histogram( taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',   place_id=place)
+    
+    print("histogram:",histogram)
+
+    days = pd.Series(histogram)
+    
+    #ok I'm going insane because it doesn't report all the dates, they start from first occurrence. Dunno why. Need to fill in the missing zeros...
+    #I love stackoverflow: https://stackoverflow.com/questions/19324453/add-missing-dates-to-pandas-dataframe
+    
+    idx = pd.date_range(time1, time2)
+    days.index = pd.DatetimeIndex(days.index)
+    days = days.reindex(idx, fill_value=0)
+    
+    #get the data for the excluded user, fill it, and subtract it....
+    if excluded_observers != '':
+        for excluded in excluded_observers:
+            histogram = get_observation_histogram( taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',   place_id=place, user_id = excluded)
+    
+            excluded_days = pd.Series(histogram)
+            
+            idx = pd.date_range(time1, time2)
+            excluded_days.index = pd.DatetimeIndex(excluded_days.index)
+            excluded_days = excluded_days.reindex(idx, fill_value=0)    
+            
+            print( excluded, excluded_days.value_counts())
+            
+            print ("OLD DAYS", days.value_counts())
+            
+            days = days - excluded_days
+            
+            print( "NEW DAYS", days.value_counts())
+            
+    
+    return days
+
+
 
 species = '56887' #pensylvanicus
 species = '198857' #ashtoni
@@ -228,12 +279,16 @@ species = '308937' #fraternus
 species = '198856' #auricomus
 species = '120215' #griseocollis
 species = '121517' #terricola
-species = '52775' # ALL BOMBUS
 species = '144011' #rufocinctus
 species = '118970' #impatiens
 species = '271451' #crotchii
 species = '198859' #citrinus
+
+species = '52775' # ALL BOMBUS
 species = '121519' #affinis
+species = '52779' #bimaculatus
+
+
 
 
 
@@ -249,13 +304,16 @@ x = np.cumsum(Twent_twentytwo)
 y = np.cumsum(Twent_twentythree) 
 z = np.cumsum(Twent_twentyfour) 
 
-
+#print out sums cuz why not
+print ("2020 total", w[-1])
+print ("W", w)
 
 
 #plotting!!
-fig = plt.figure(figsize=[10,6])
+fig = plt.figure(figsize=[8,5])
 
 ax = fig.add_subplot(111)
+ax.set_title('All records of a given species', y=0.95, pad = 2)
 
 
 
@@ -282,6 +340,60 @@ ax.xaxis.set_major_formatter(mdates.DateFormatter('%#b-%#d'))
 
 
 plt.show()
+
+
+#try multiple states:
+Twent_twentytwenty = get_day_histogram(species, dt.datetime(2020, 3, 1), dt.datetime(2020, 10, 31), ["38", "32", "24", "35"])
+Twent_twentyone = get_day_histogram(species, dt.datetime(2021, 3, 1), dt.datetime(2021, 10, 31), ["38", "32", "24", "35"])
+Twent_twentytwo = get_day_histogram(species, dt.datetime(2022, 3, 1), dt.datetime(2022, 10, 31), ["38", "32", "24", "35"])
+Twent_twentythree = get_day_histogram(species, dt.datetime(2023, 3, 1), dt.datetime(2023, 10, 31), ["38", "32", "24", "35"])
+Twent_twentyfour = get_day_histogram(species, dt.datetime(2024, 3, 1), dt.datetime(2024, 10, 31), ["38", "32", "24", "35"])
+
+v = np.cumsum(Twent_twentytwenty) 
+w = np.cumsum(Twent_twentyone) 
+x = np.cumsum(Twent_twentytwo) 
+y = np.cumsum(Twent_twentythree) 
+z = np.cumsum(Twent_twentyfour) 
+
+
+print ("2020 total", v.iloc[-1]) #huh guess it works :)
+print ("2021 total", w.iloc[-1])
+print ("2022 total", x.iloc[-1])
+print ("2023 total", y.iloc[-1])
+print ("2024 total", z.iloc[-1])
+
+#plotting!!
+fig = plt.figure(figsize=[8,5])
+
+ax = fig.add_subplot(111)
+ax.set_title('All Bombus observations (IA, IL, MN, WI)', y=0.95, pad = 2)
+ax.set_title(r'All Midwest $B. affinis$', y=0.95, pad = 2)
+
+
+#here gonna trim z to not go beyond current date
+duration = datetime.now() - dt.datetime(2024, 3, 1)
+duration = duration.days + 1 #adding 1 to prevent off by 1 apparently...
+print ("duration", z.index[:duration])
+
+#ok just doing everything on the SECOND index, so be aware of that. 
+ax.plot(y.index[:duration], z.values[:duration], label = '2024')    
+ax.plot(y.index, y.values, label = '2023') 
+ax.plot(y.index, x.values, label = '2022')
+ax.plot(y.index, w.values, label = '2021')
+ax.plot(y.index, v.values, label = '2020')
+
+ax.legend(loc="upper left")
+ax.tick_params(axis='both', labelsize=11) # for both x and y axes
+
+
+#set date format on x axis
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%#b-%#d'))
+
+
+
+plt.show()
+
+
 affinis_state_breakdown(species)
 
 print ("done")

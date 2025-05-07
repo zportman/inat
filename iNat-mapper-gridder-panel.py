@@ -43,7 +43,11 @@ def make_map_polygon(lat, lon):
     return np.array([point1, point2, point3, point4])
 
 
-allbees = pd.read_csv("affinis-16-nov-2024.csv", sep=',', on_bad_lines = "skip", index_col=False, dtype='unicode')
+#allbees = pd.read_csv("affinis-16-nov-2024.csv", sep=',', on_bad_lines = "skip", index_col=False, dtype='unicode')
+
+allbees = pd.read_csv("affinis-26-mar-2025.csv", sep=',', on_bad_lines = "skip", index_col=False, dtype='unicode')
+
+
 
 #convert date to datetime
 allbees['observed_on'] = pd.to_datetime(allbees['observed_on'])

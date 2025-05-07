@@ -35,7 +35,9 @@ def get_observers_state_year(data, state, year):
     #return just the array of counts
     return observers.values
 
-allbees = pd.read_csv("affinis-16-nov-2024.csv", sep=',', on_bad_lines = "skip", index_col=False, dtype='unicode')
+#allbees = pd.read_csv("affinis-16-nov-2024.csv", sep=',', on_bad_lines = "skip", index_col=False, dtype='unicode')
+allbees = pd.read_csv("affinis-26-mar-2025.csv", sep=',', on_bad_lines = "skip", index_col=False, dtype='unicode')
+
 
 #convert date to datetime
 allbees['observed_on'] = pd.to_datetime(allbees['observed_on'])
@@ -189,6 +191,13 @@ allbees = allbees[allbees['observed_on'].dt.year > 2019]
 
 all_grids = allbees['gridcell'].value_counts()
 print ("Number of grids all time (since 2020):", len(all_grids))
+print (all_grids.head())
+
+bees_2020 = allbees[allbees['observed_on'].dt.year == 2020]
+bees_2020 = bees_2020['gridcell'].value_counts()
+
+print (bees_2020.head())
+
 
 
 all_grids_2020 = get_gridcells_year(allbees, 2020)
