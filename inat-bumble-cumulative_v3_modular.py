@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import datetime as dt
 import pandas as pd
+import time
+import csv
 
 
 #TODO: get number of unique observors per state per year, and graph the average number of observations per using box plots?
@@ -116,8 +118,9 @@ def midwest_state_breakdown(species, year1, year2):
     ax1[1,1].legend(loc="upper left", reverse=True)    
     ax1[1,1].xaxis.set_major_formatter(mdates.DateFormatter('%#b-%#d'))    
     
-    plt.show()
+    plt.savefig('output/' + species_list[species] + '.png')
     
+    plt.show()
     
 
 
@@ -309,7 +312,9 @@ def get_day_histogram(species, time1, time2, place="97394"): #place = north amer
     #histogram = get_observation_histogram(taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research')
     #histogram = get_observation_histogram(taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',
     #                                      nelat='64.18813159901904', nelng='-50', swlat ='22', swlng='-100' )
-    histogram = get_observation_histogram( taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',   place_id=place)
+    ###histogram = get_observation_histogram( taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',   place_id=place)
+    histogram = get_observation_histogram( taxon_id=species, interval = 'day', d1=time1, d2 = time2, verifiable='true',   place_id=place)
+    
     
     print("histogram:",histogram)
 
@@ -335,7 +340,8 @@ def get_day_histogram_minus_observers(species, time1, time2, place="97394", excl
     #histogram = get_observation_histogram(taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research')
     #histogram = get_observation_histogram(taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',
     #                                      nelat='64.18813159901904', nelng='-50', swlat ='22', swlng='-100' )
-    histogram = get_observation_histogram( taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',   place_id=place)
+    ###histogram = get_observation_histogram( taxon_id=species, interval = 'day', d1=time1, d2 = time2, quality_grade='research',   place_id=place)
+    histogram = get_observation_histogram( taxon_id=species, interval = 'day', d1=time1, d2 = time2, verifiable='true',   place_id=place)
     
     print("histogram:",histogram)
 
@@ -370,38 +376,100 @@ def get_day_histogram_minus_observers(species, time1, time2, place="97394", excl
     
     return days
 
+
+
+def get_Bombus_midwest_table(species, year1=2020, year2= 2025):
+    #Here, given a species, autogenerate a table for csv showing total bombus observations and species of interest for 2020-2025 and print to a csv...
+    #this does not pull in private observations since it limits by state...
+    
+    output = [['Year', "All Midwest Bombus", "Midwest " + species_list[species], "MN " + species_list[species], "WI " + species_list[species], "IA " + species_list[species], "IL " + species_list[species]]]
+    all_bombus = '52775' # ALL BOMBUS
+    
+    
+    years_list = list(range(year1, year2+1))
+    
+    for year in years_list:
+        
+        bombus_records = get_day_histogram(all_bombus, dt.datetime(year, 3, 1), dt.datetime(year, 10, 31), ["38", "32", "24", "35"])
+        all_bombus_totals = np.cumsum(bombus_records).iloc[-1]     
+        
+        species_records = get_day_histogram(species, dt.datetime(year, 3, 1), dt.datetime(year, 10, 31), ["38", "32", "24", "35"])
+        species_totals = np.cumsum(species_records).iloc[-1]
+        
+        
+        mn_records = get_day_histogram(species, dt.datetime(year, 3, 1), dt.datetime(year, 10, 31), 38)
+        mn_species_totals = np.cumsum(mn_records).iloc[-1]     
+        wi_records = get_day_histogram(species, dt.datetime(year, 3, 1), dt.datetime(year, 10, 31), 32)
+        wi_species_totals = np.cumsum(wi_records).iloc[-1]      
+        ia_records = get_day_histogram(species, dt.datetime(year, 3, 1), dt.datetime(year, 10, 31), 24)
+        ia_species_totals = np.cumsum(ia_records).iloc[-1]              
+        il_records = get_day_histogram(species, dt.datetime(year, 3, 1), dt.datetime(year, 10, 31), 35)
+        il_species_totals = np.cumsum(il_records).iloc[-1]  
+        
+        #should also add in for each individual state.....
+        
+        
+        #then just add year, bombus totals, and species totals to output table list
+        
+        output += [[year, all_bombus_totals, species_totals, mn_species_totals, wi_species_totals, ia_species_totals, il_species_totals]]
+        print ("OOOOOOOOOOOOOOUTPUT", output)
+    
+    #last do column sums
+    arr = np.array(output[1:])
+    column_sums = np.sum(arr, axis=0)
+    column_sums[0] = 0
+    print ("COLUMN SUMS: ", column_sums)
+    output += [column_sums.tolist()]
+        
+    #then shunt to csv    
+    with open("bombus_totals.csv", 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(output)        
+
+        
+   
+
 species_list = {'52775': "Bombus", '121519': "B. affinis", '198857': "B. ashtoni", '198856': "B. auricomus", '52779': "B. bimaculatus", 
                 '143854': "B. borealis", '198859': "B. citrinus", '271451': "B. crotchii", '52774': "B. fervidus", '541839': "B. flavidus", 
                 '308937': "B. fraternus", '120215': "B. griseocollis", '118970': "B. impatiens",
                 '143036': "B. insularis", '82371': "B. occidentalis", '155085': "B. perplexus",
-                '56887': "B. pensylvanicus", '144011': "B. rufocinctus", '127905': "B. ternarius", '121517': "B. terricola", '128670': "B. vagans", '51110': "Xylocopa virginica"}
+                '56887': "B. pensylvanicus", '144011': "B. rufocinctus", '127905': "B. ternarius", '121517': "B. terricola", '128670': "B. vagans", '51110': "Xylocopa virginica",
+                '127812': "All Hylaeus"}
 
-species = '56887' #pensylvanicus
 species = '198857' #ashtoni
-species = '143036' #insularis
-species = '128670' #vagans
 species = '82371' #occidentalis
-species = '127905' #ternarius
 species = '541839' #flavidus
-species = '51110'#Xylocopa virginica
-species = '155085' #perplexus
-species = '143854' #borealis
-species = '308937' #fraternus
-species = '121517' #terricola
 species = '271451' #crotchii
 
-species = '52779' #bimaculatus
 
-species = '144011' #rufocinctus
+species = '128670' #vagans
+species = '51110'#Xylocopa virginica
+
+species = '52775' # ALL BOMBUS
+species = '127812' #all Hylaeus
+
+species = '121517' #terricola
+species = '308937' #fraternus
+species = '143036' #insularis
+
+species = '52774' #fervidus
+species = '127905' #ternarius
+species = '198859' #citrinus
+species = '155085' #perplexus
+species = '56887' #pensylvanicus
 species = '198856' #auricomus
 species = '118970' #impatiens
-species = '52774' #fervidus
-species = '120215' #griseocollis
-species = '198859' #citrinus
 species = '52775' # ALL BOMBUS
+species = '143854' #borealis
+species = '144011' #rufocinctus
+species = '120215' #griseocollis
+species = '52779' #bimaculatus
 species = '121519' #affinis
 
 
+
+#try out table:
+get_Bombus_midwest_table(species)
 
 
 Twent_twentytwenty = get_day_histogram(species, dt.datetime(2020, 3, 1), dt.datetime(2020, 10, 31))
@@ -446,7 +514,7 @@ ax.plot(y.index, w.values, label = '2021')
 ax.plot(y.index, x.values, label = '2022')
 ax.plot(y.index, y.values, label = '2023') 
 ax.plot(y.index, z.values, label = '2024') 
-#ax.plot(y.index, a.values, label = '2025')
+ax.plot(y.index, a.values, label = '2025')
 
 
 ax.legend(loc="upper left", reverse=True)
@@ -466,7 +534,7 @@ Twent_twentyone = get_day_histogram(species, dt.datetime(2021, 3, 1), dt.datetim
 Twent_twentytwo = get_day_histogram(species, dt.datetime(2022, 3, 1), dt.datetime(2022, 10, 31), ["38", "32", "24", "35"])
 Twent_twentythree = get_day_histogram(species, dt.datetime(2023, 3, 1), dt.datetime(2023, 10, 31), ["38", "32", "24", "35"])
 Twent_twentyfour = get_day_histogram(species, dt.datetime(2024, 3, 1), dt.datetime(2024, 10, 31), ["38", "32", "24", "35"])
-#Twent_twentyfive = get_day_histogram(species, dt.datetime(2025, 3, 1), dt.datetime(2025, 10, 31), ["38", "32", "24", "35"])
+Twent_twentyfive = get_day_histogram(species, dt.datetime(2025, 3, 1), dt.datetime(2025, 10, 31), ["38", "32", "24", "35"])
 
 
 v = np.cumsum(Twent_twentytwenty) 
@@ -504,7 +572,7 @@ ax.plot(y.index, w.values, label = '2021')
 ax.plot(y.index, x.values, label = '2022')
 ax.plot(y.index, y.values, label = '2023') 
 ax.plot(y.index, z.values, label = '2024') 
-#ax.plot(y.index, a.values, label = '2025')
+ax.plot(y.index, a.values, label = '2025')
 
 
 ax.legend(loc="upper left", reverse=True)
@@ -520,8 +588,14 @@ plt.show()
 
 
 #affinis_state_breakdown(species)
-
 midwest_state_breakdown(species, 2020, 2026)
+
+
+"""
+for species in species_list:
+    midwest_state_breakdown(species, 2020, 2026)
+    time.sleep(10) #stop from getting throttled
+"""
 
 #running the deprecated method in order to get the illinois minus the 2 observers:
 #affinis_state_breakdown(species)
@@ -531,3 +605,5 @@ print ("done")
 
 
 
+#TODO: run overall and state methods but exclude observers with a number of observations over a certain cutoff
+# could make a method pretty easily to get a list of observers with great number in total and also in a given state and then feed them to exclude.
